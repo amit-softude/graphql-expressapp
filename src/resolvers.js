@@ -4,10 +4,10 @@ const Review = require('./models/Review');
 
 const resolvers = {
   Query: {
-    games: async () => await Game.find().populate('reviews'),
-    game: async (_, { id }) => await Game.findById(id).populate('reviews'),
-    authors: async () => await Author.find().populate('reviews'),
-    author: async (_, { id }) => await Author.findById(id).populate('reviews'),
+    games: async () => await Game.find(),
+    game: async (_, { id }) => await Game.findById(id),
+    authors: async () => await Author.find(),
+    author: async (_, { id }) => await Author.findById(id),
     reviews: async () => await Review.find().populate(['author', 'game']),
     review: async (_, { id }) => await Review.findById(id).populate(['author', 'game'])
   },
