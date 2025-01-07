@@ -1,20 +1,42 @@
-const typeDefs = `
-  type Book {
+const typeDefs = `#graphql
+  type Game {
     id: ID!
     title: String!
-    author: String!
-    publishedYear: Int
+    platform: [String!]!
+    reviews: [Review!]
+  }
+
+  type Author {
+    id: ID!
+    name: String!
+    verified: Boolean!
+    reviews: [Review!]
+  }
+
+  type Review {
+    id: ID!
+    rating: Int!
+    content: String!
+    author: Author!
+    game: Game!
   }
 
   type Query {
-    books: [Book]
-    book(id: ID!): Book
+    games: [Game]
+    game(id: ID!): Game
+    authors: [Author]
+    author(id: ID!): Author
+    reviews: [Review]
+    review(id: ID!): Review
   }
 
   type Mutation {
-    addBook(title: String!, author: String!, publishedYear: Int): Book
-    updateBook(id: ID!, title: String, author: String, publishedYear: Int): Book
-    deleteBook(id: ID!): Boolean
+    addGame(title: String!, platform: [String!]!): Game
+    addAuthor(name: String!, verified: Boolean): Author
+    addReview(rating: Int!, content: String!, authorId: ID!, gameId: ID!): Review
+    deleteGame(id: ID!): Boolean
+    deleteAuthor(id: ID!): Boolean
+    deleteReview(id: ID!): Boolean
   }
 `;
 

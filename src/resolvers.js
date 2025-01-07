@@ -1,28 +1,66 @@
-const Book = require('./models/Book');
+const Game = require('./models/Game');
+const Author = require('./models/Author');
+const Review = require('./models/Review');
 
 const resolvers = {
   Query: {
-    books: async () => {
-      return await Book.find();
-    },
-    book: async (_, { id }) => {
-      return await Book.findById(id);
-    }
+    games: async () => await Game.find().populate('reviews'),
+    game: async (_, { id }) => await Game.findById(id).populate('reviews'),
+    authors: async () => await Author.find().populate('reviews'),
+    author: async (_, { id }) => await Author.findById(id).populate('reviews'),
+    reviews: async () => await Review.find().populate(['author', 'game']),
+    review: async (_, { id }) => await Review.findById(id).populate(['author', 'game'])
   },
   Mutation: {
-    addBook: async (_, { title, author, publishedYear }) => {
-      const book = new Book({ title, author, publishedYear });
-      return await book.save();
+    addGame: async (_, { title, platform }) => {
+      const game = new Game({ title, platform });
+      return await game.save();
     },
-    updateBook: async (_, { id, title, author, publishedYear }) => {
-      return await Book.findByIdAndUpdate(
-        id,
-        { title, author, publishedYear },
-        { new: true }
-      );
+    addAuthor: async (_, { name, verified }) => {
+      const author = new Author({ name, verified });
+      return await author.save();
     },
-    deleteBook: async (_, { id }) => {
-      await Book.findByIdAndDelete(id);
+    addReview: async (_, { rating, content, authorId, gameId }) => {
+      const review = new Review({
+        rating,
+        content,
+        author: authorId,
+        game: gameId
+      });
+      
+      const savedReview = await review.save();
+      
+      // Update the references in Game and Author
+      await Game.findByIdAndUpdate(gameId, {
+        $push: { reviews: savedReview._id }
+      });
+      await Author.findByIdAndUpdate(authorId, {
+        $push: { reviews: savedReview._id }
+      });
+      
+      return await savedReview.populate(['author', 'game']);
+    },
+    deleteGame: async (_, { id }) => {
+      await Game.findByIdAndDelete(id);
+      await Review.deleteMany({ game: id });
+      return true;
+    },
+    deleteAuthor: async (_, { id }) => {
+      await Author.findByIdAndDelete(id);
+      await Review.deleteMany({ author: id });
+      return true;
+    },
+    deleteReview: async (_, { id }) => {
+      const review = await Review.findById(id);
+      if (review) {
+        await Game.findByIdAndUpdate(review.game, {
+          $pull: { reviews: id }
+        });
+        await Author.findByIdAndUpdate(review.author, {
+          $pull: { reviews: id }
+        });
+        await Review.findByIdAndDelete(id);
+      }
       return true;
     }
   }
